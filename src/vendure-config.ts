@@ -62,7 +62,7 @@ export const config: VendureConfig = {
   },
   // When adding or altering custom field definitions, the database will
   // need to be updated. See the "Migrations" section in README.md.
-  customFields: {},
+  customFields: { Address: [{ name: "NIP", type: "string" }] },
   plugins: [
     AssetServerPlugin.init({
       route: "assets",
