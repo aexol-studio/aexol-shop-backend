@@ -12,15 +12,18 @@
     "start": "concurrently npm:start:*",
     "migration:generate": "ts-node migration generate",
     "migration:run": "ts-node migration run",
-    "migration:revert": "ts-node migration revert"
+    "migration:revert": "ts-node migration revert",
+    "stripe": "stripe listen --forward-to localhost:3000/payments/stripe"
   },
   "dependencies": {
     "@vendure/admin-ui-plugin": "2.1.4",
     "@vendure/asset-server-plugin": "2.1.4",
     "@vendure/core": "2.1.4",
     "@vendure/email-plugin": "2.1.4",
+    "@vendure/payments-plugin": "^2.1.5",
     "dotenv": "16.3.1",
     "pg": "8.11.3",
+    "stripe": "^13.11.0",
     "typescript": "4.9.5"
   },
   "devDependencies": {

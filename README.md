@@ -2,6 +2,16 @@
 
 😊
 
+We add some `customFields` into GraphQL schema some of them:
+
+- NIP
+-
+
+We use few plugins for better storefront implementation
+
+- Stripe Plugin - [Vendure](https://docs.vendure.io/reference/core-plugins/payments-plugin/stripe-plugin/)
+-
+
 # Vendure Documenation
 
 This project was generated with [`@vendure/create`](https://github.com/vendure-ecommerce/vendure/tree/master/packages/create).

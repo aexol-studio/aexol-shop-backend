@@ -3,10 +3,13 @@ import {
   DefaultJobQueuePlugin,
   DefaultSearchPlugin,
   VendureConfig,
+  EntityHydrator,
+  LanguageCode,
 } from "@vendure/core";
 import { defaultEmailHandlers, EmailPlugin } from "@vendure/email-plugin";
 import { AssetServerPlugin } from "@vendure/asset-server-plugin";
 import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
+import { StripePlugin } from "@vendure/payments-plugin/package/stripe";
 import "dotenv/config";
 import path from "path";
 
@@ -62,8 +65,73 @@ export const config: VendureConfig = {
   },
   // When adding or altering custom field definitions, the database will
   // need to be updated. See the "Migrations" section in README.md.
-  customFields: { Address: [{ name: "NIP", type: "string" }] },
+  customFields: {
+    // Known as Tax Number in Poland
+    Address: [{ name: "NIP", type: "string", nullable: true }],
+    // Very useful price marking
+    ProductVariant: [
+      {
+        name: "beforePrice",
+        type: "int",
+        nullable: true,
+        ui: { component: "currency-form-input" },
+        label: [
+          {
+            languageCode: LanguageCode.pl,
+            value: "Cena przed promocją",
+          },
+          {
+            languageCode: LanguageCode.en,
+            value: "Price before promotion",
+          },
+        ],
+      },
+    ],
+  },
   plugins: [
+    StripePlugin.init({
+      storeCustomersInStripe: true,
+      //TODO: Verify all Stripe settings
+      paymentIntentCreateParams: (injector, ctx, order) => {
+        const entityHydrator = injector.get(EntityHydrator);
+
+        return {
+          currency: "pln",
+          automatic_payment_methods: { enabled: false },
+          payment_method_types: ["card", "blik", "p24"],
+          metadata: {
+            orderId: order.id,
+          },
+        };
+      },
+      customerCreateParams: async (injector, ctx, order) => {
+        const entityHydrator = injector.get(EntityHydrator);
+        const customer = order.customer;
+        if (!customer) return {};
+        await entityHydrator.hydrate(ctx, customer, {
+          relations: ["addresses"],
+        });
+        const defaultBillingAddress =
+          customer.addresses.find((a) => a.defaultBillingAddress) ??
+          customer.addresses[0];
+        return {
+          address: {
+            line1:
+              defaultBillingAddress.streetLine1 ||
+              order.shippingAddress?.streetLine1,
+            postal_code:
+              defaultBillingAddress.postalCode ||
+              order.shippingAddress?.postalCode,
+            city: defaultBillingAddress.city || order.shippingAddress?.city,
+            state:
+              defaultBillingAddress.province || order.shippingAddress?.province,
+            country:
+              defaultBillingAddress.country.code ||
+              order.shippingAddress?.countryCode,
+          },
+        };
+      },
+    }),
     AssetServerPlugin.init({
       route: "assets",
       assetUploadDir: path.join(__dirname, "../static/assets"),
