@@ -1,10 +1,10 @@
 import {
-  dummyPaymentHandler,
   DefaultJobQueuePlugin,
   DefaultSearchPlugin,
   VendureConfig,
   EntityHydrator,
   LanguageCode,
+  PaymentMethodHandler,
 } from "@vendure/core";
 import { defaultEmailHandlers, EmailPlugin } from "@vendure/email-plugin";
 import { AssetServerPlugin } from "@vendure/asset-server-plugin";
@@ -14,6 +14,72 @@ import "dotenv/config";
 import path from "path";
 
 const IS_DEV = process.env.APP_ENV === "dev";
+
+export const dummyPaymentHandler = new PaymentMethodHandler({
+  code: "dummy-payment-handler",
+  description: [
+    /* omitted for brevity */
+  ],
+  args: {
+    automaticSettle: {
+      type: "boolean",
+      label: [
+        {
+          languageCode: LanguageCode.en,
+          value: "Authorize and settle in 1 step",
+        },
+      ],
+      description: [
+        {
+          languageCode: LanguageCode.en,
+          value: 'If enabled, Payments will be created in the "Settled" state.',
+        },
+      ],
+      required: true,
+      defaultValue: false,
+    },
+  },
+  createPayment: async (ctx, order, amount, args, metadata, method) => {
+    console.log("createPayment");
+    const properMetadata = JSON.parse(metadata as unknown as string) as {
+      shouldDecline: boolean;
+      shouldCancel: boolean;
+      shouldError: boolean;
+      shouldErrorOnSettle: boolean;
+    };
+
+    if (properMetadata.shouldDecline) {
+      return {
+        amount,
+        state: "Declined",
+      };
+    }
+
+    if (properMetadata.shouldCancel) {
+      return {
+        amount,
+        state: "Cancelled",
+      };
+    }
+
+    if (properMetadata.shouldError) {
+      throw new Error("Error in payment");
+    }
+
+    return { amount, state: "Authorized" };
+  },
+  settlePayment: async (ctx, order, payment, args, metadata) => {
+    const properMetadata = JSON.parse(metadata as unknown as string) as {
+      shouldDecline: boolean;
+      shouldError: boolean;
+      shouldErrorOnSettle: boolean;
+    };
+    if (properMetadata.shouldErrorOnSettle) {
+      throw new Error("Error in payment");
+    }
+    return { success: true };
+  },
+});
 
 export const config: VendureConfig = {
   apiOptions: {
@@ -109,6 +175,26 @@ export const config: VendureConfig = {
     //       },
     //     };
     //   },
+    // }),
+    // AssetServerPlugin.init({
+    //   route: "assets",
+    //   assetUploadDir: path.join(__dirname, "assets"),
+    //   namingStrategy: new DefaultAssetNamingStrategy(),
+    //   storageStrategyFactory: configureS3AssetStorage({
+    //     bucket: "vendure-test",
+    //     credentials: {
+    //       accessKeyId: "",
+    //       secretAccessKey: "",
+    //     },
+    //     nativeS3Configuration: {
+    //       endpoint: "http://192.168.0.247:8000/",
+    //       forcePathStyle: true,
+    //       signatureVersion: "v4",
+    //       // The `region` is required by the AWS SDK even when using MinIO,
+    //       // so we just use a dummy value here.
+    //       region: "eu",
+    //     },
+    //   }),
     // }),
     AssetServerPlugin.init({
       route: "assets",
