@@ -5,9 +5,13 @@ import {
   EntityHydrator,
   LanguageCode,
   PaymentMethodHandler,
+  DefaultAssetNamingStrategy,
 } from "@vendure/core";
 import { defaultEmailHandlers, EmailPlugin } from "@vendure/email-plugin";
-import { AssetServerPlugin } from "@vendure/asset-server-plugin";
+import {
+  AssetServerPlugin,
+  configureS3AssetStorage,
+} from "@vendure/asset-server-plugin";
 import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
 import { StripePlugin } from "@vendure/payments-plugin/package/stripe";
 import "dotenv/config";
@@ -91,15 +95,15 @@ export const config: VendureConfig = {
     // reasons.
     ...(IS_DEV
       ? {
-          adminApiPlayground: {
-            settings: { "request.credentials": "include" },
-          },
-          adminApiDebug: true,
-          shopApiPlayground: {
-            settings: { "request.credentials": "include" },
-          },
-          shopApiDebug: true,
-        }
+        adminApiPlayground: {
+          settings: { "request.credentials": "include" },
+        },
+        adminApiDebug: true,
+        shopApiPlayground: {
+          settings: { "request.credentials": "include" },
+        },
+        shopApiDebug: true,
+      }
       : {}),
   },
   authOptions: {
@@ -196,14 +200,35 @@ export const config: VendureConfig = {
     //     },
     //   }),
     // }),
-    AssetServerPlugin.init({
-      route: "assets",
-      assetUploadDir: path.join(__dirname, "../static/assets"),
-      // For local dev, the correct value for assetUrlPrefix should
-      // be guessed correctly, but for production it will usually need
-      // to be set manually to match your production url.
-      assetUrlPrefix: IS_DEV ? undefined : "https://www.my-shop.com/assets",
-    }),
+    IS_DEV
+      ? AssetServerPlugin.init({
+        route: "assets",
+        assetUploadDir: path.join(__dirname, "../static/assets"),
+        // For local dev, the correct value for assetUrlPrefix should
+        // be guessed correctly, but for production it will usually need
+        // to be set manually to match your production url.
+        assetUrlPrefix: "https://www.my-shop.com/assets",
+      }) : AssetServerPlugin.init({
+        route: "assets",
+        assetUploadDir: path.join(__dirname, "assets"),
+        namingStrategy: new DefaultAssetNamingStrategy(),
+        storageStrategyFactory: configureS3AssetStorage({
+          bucket: "vendure-dev",
+          credentials: {
+            accessKeyId: process.env.MINIO_ACCESS_KEY_ID || "",
+            secretAccessKey: process.env.MINIO_SECRET_ACCESS_KEY || "",
+          },
+          nativeS3Configuration: {
+            endpoint: process.env.MINIO_ENDPOINT ?? "http://localhost:9000",
+            forcePathStyle: true,
+            signatureVersion: "v4",
+            // The `region` is required by the AWS SDK even when using MinIO,
+            // so we just use a dummy value here.
+            region: "eu-west-1",
+          },
+        }),
+      }),
+
     DefaultJobQueuePlugin.init({ useDatabaseForBuffer: true }),
     DefaultSearchPlugin.init({ bufferUpdates: false, indexStockStatus: true }),
     EmailPlugin.init({
@@ -225,7 +250,9 @@ export const config: VendureConfig = {
     AdminUiPlugin.init({
       route: "admin",
       port: 3002,
-      adminUiConfig: {},
+      adminUiConfig: {
+        apiPort: 3000,
+      },
     }),
   ],
 };
