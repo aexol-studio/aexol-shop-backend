@@ -6,6 +6,9 @@ import {
   LanguageCode,
   PaymentMethodHandler,
   DefaultAssetNamingStrategy,
+  RequestContext,
+  StockDisplayStrategy,
+  ProductVariant,
 } from "@vendure/core";
 import { defaultEmailHandlers, EmailPlugin } from "@vendure/email-plugin";
 import {
@@ -18,7 +21,6 @@ import "dotenv/config";
 import path from "path";
 
 const IS_DEV = process.env.APP_ENV === "dev";
-
 export const dummyPaymentHandler = new PaymentMethodHandler({
   code: "dummy-payment-handler",
   description: [
@@ -73,19 +75,61 @@ export const dummyPaymentHandler = new PaymentMethodHandler({
     return { amount, state: "Authorized" };
   },
   settlePayment: async (ctx, order, payment, args, metadata) => {
-    const properMetadata = JSON.parse(metadata as unknown as string) as {
-      shouldDecline: boolean;
-      shouldError: boolean;
-      shouldErrorOnSettle: boolean;
-    };
-    if (properMetadata.shouldErrorOnSettle) {
-      throw new Error("Error in payment");
-    }
+    console.dir("settlePayment", metadata);
+    console.dir("payment", payment);
+
     return { success: true };
   },
 });
 
+export class ExactStockDisplayStrategy implements StockDisplayStrategy {
+  getStockLevel(
+    ctx: RequestContext,
+    productVariant: ProductVariant,
+    saleableStockLevel: number
+  ): string {
+    return saleableStockLevel.toString();
+  }
+}
+
+const AssetsPlugin = IS_DEV
+  ? AssetServerPlugin.init({
+      route: "assets",
+      assetUploadDir: path.join(__dirname, "../static/assets"),
+      // For local dev, the correct value for assetUrlPrefix should
+      // be guessed correctly, but for production it will usually need
+      // to be set manually to match your production url.
+      assetUrlPrefix: "https://www.my-shop.com/assets",
+    })
+  : AssetServerPlugin.init({
+      route: "assets",
+      assetUploadDir: path.join(__dirname, "assets"),
+      namingStrategy: new DefaultAssetNamingStrategy(),
+      storageStrategyFactory: configureS3AssetStorage({
+        bucket: "vendure-dev",
+        credentials: {
+          accessKeyId: process.env.MINIO_ACCESS_KEY_ID || "",
+          secretAccessKey: process.env.MINIO_SECRET_ACCESS_KEY || "",
+        },
+        nativeS3Configuration: {
+          endpoint: process.env.MINIO_ENDPOINT ?? "http://localhost:9000",
+          forcePathStyle: true,
+          signatureVersion: "v4",
+          // The `region` is required by the AWS SDK even when using MinIO,
+          // so we just use a dummy value here.
+          region: "eu-west-1",
+        },
+      }),
+    });
+
 export const config: VendureConfig = {
+  catalogOptions: {
+    stockDisplayStrategy: new ExactStockDisplayStrategy(),
+  },
+  paymentOptions: {
+    paymentMethodHandlers: [dummyPaymentHandler],
+  },
+
   apiOptions: {
     port: 3000,
     adminApiPath: "admin-api",
@@ -95,15 +139,15 @@ export const config: VendureConfig = {
     // reasons.
     ...(IS_DEV
       ? {
-        adminApiPlayground: {
-          settings: { "request.credentials": "include" },
-        },
-        adminApiDebug: true,
-        shopApiPlayground: {
-          settings: { "request.credentials": "include" },
-        },
-        shopApiDebug: true,
-      }
+          adminApiPlayground: {
+            settings: { "request.credentials": "include" },
+          },
+          adminApiDebug: true,
+          shopApiPlayground: {
+            settings: { "request.credentials": "include" },
+          },
+          shopApiDebug: true,
+        }
       : {}),
   },
   authOptions: {
@@ -130,13 +174,11 @@ export const config: VendureConfig = {
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
   },
-  paymentOptions: {
-    paymentMethodHandlers: [dummyPaymentHandler],
-  },
   // When adding or altering custom field definitions, the database will
   // need to be updated. See the "Migrations" section in README.md.
   customFields: {},
   plugins: [
+    AssetsPlugin,
     // StripePlugin.init({
     //   storeCustomersInStripe: true,
     //   //TODO: Verify all Stripe settings
@@ -180,55 +222,6 @@ export const config: VendureConfig = {
     //     };
     //   },
     // }),
-    // AssetServerPlugin.init({
-    //   route: "assets",
-    //   assetUploadDir: path.join(__dirname, "assets"),
-    //   namingStrategy: new DefaultAssetNamingStrategy(),
-    //   storageStrategyFactory: configureS3AssetStorage({
-    //     bucket: "vendure-test",
-    //     credentials: {
-    //       accessKeyId: "",
-    //       secretAccessKey: "",
-    //     },
-    //     nativeS3Configuration: {
-    //       endpoint: "http://192.168.0.247:8000/",
-    //       forcePathStyle: true,
-    //       signatureVersion: "v4",
-    //       // The `region` is required by the AWS SDK even when using MinIO,
-    //       // so we just use a dummy value here.
-    //       region: "eu",
-    //     },
-    //   }),
-    // }),
-    IS_DEV
-      ? AssetServerPlugin.init({
-        route: "assets",
-        assetUploadDir: path.join(__dirname, "../static/assets"),
-        // For local dev, the correct value for assetUrlPrefix should
-        // be guessed correctly, but for production it will usually need
-        // to be set manually to match your production url.
-        assetUrlPrefix: "https://www.my-shop.com/assets",
-      }) : AssetServerPlugin.init({
-        route: "assets",
-        assetUploadDir: path.join(__dirname, "assets"),
-        namingStrategy: new DefaultAssetNamingStrategy(),
-        storageStrategyFactory: configureS3AssetStorage({
-          bucket: "vendure-dev",
-          credentials: {
-            accessKeyId: process.env.MINIO_ACCESS_KEY_ID || "",
-            secretAccessKey: process.env.MINIO_SECRET_ACCESS_KEY || "",
-          },
-          nativeS3Configuration: {
-            endpoint: process.env.MINIO_ENDPOINT ?? "http://localhost:9000",
-            forcePathStyle: true,
-            signatureVersion: "v4",
-            // The `region` is required by the AWS SDK even when using MinIO,
-            // so we just use a dummy value here.
-            region: "eu-west-1",
-          },
-        }),
-      }),
-
     DefaultJobQueuePlugin.init({ useDatabaseForBuffer: true }),
     DefaultSearchPlugin.init({ bufferUpdates: false, indexStockStatus: true }),
     EmailPlugin.init({
@@ -250,9 +243,7 @@ export const config: VendureConfig = {
     AdminUiPlugin.init({
       route: "admin",
       port: 3002,
-      adminUiConfig: {
-        apiPort: 3000,
-      },
+      adminUiConfig: {},
     }),
   ],
 };
