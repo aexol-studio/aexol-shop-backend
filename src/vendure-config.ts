@@ -9,6 +9,8 @@ import {
   RequestContext,
   StockDisplayStrategy,
   ProductVariant,
+  DefaultLogger,
+  LogLevel,
 } from "@vendure/core";
 import { defaultEmailHandlers, EmailPlugin } from "@vendure/email-plugin";
 import {
@@ -92,31 +94,26 @@ export class ExactStockDisplayStrategy implements StockDisplayStrategy {
   }
 }
 
-const AssetsPlugin = IS_DEV
-  ? AssetServerPlugin.init({
-      route: "assets",
-      assetUploadDir: path.join(__dirname, "../static/assets"),
-    })
-  : AssetServerPlugin.init({
-      route: "assets",
-      assetUploadDir: path.join(__dirname, "assets"),
-      namingStrategy: new DefaultAssetNamingStrategy(),
-      storageStrategyFactory: configureS3AssetStorage({
-        bucket: "vendure-dev",
-        credentials: {
-          accessKeyId: process.env.MINIO_ACCESS_KEY_ID || "",
-          secretAccessKey: process.env.MINIO_SECRET_ACCESS_KEY || "",
-        },
-        nativeS3Configuration: {
-          endpoint: process.env.MINIO_ENDPOINT ?? "http://localhost:9000",
-          forcePathStyle: true,
-          signatureVersion: "v4",
-          // The `region` is required by the AWS SDK even when using MinIO,
-          // so we just use a dummy value here.
-          region: "eu-west-1",
-        },
-      }),
-    });
+const AssetsPlugin = AssetServerPlugin.init({
+  route: "assets",
+  assetUploadDir: path.join(__dirname, "assets"),
+  namingStrategy: new DefaultAssetNamingStrategy(),
+  storageStrategyFactory: configureS3AssetStorage({
+    bucket: "vendure-dev",
+    credentials: {
+      accessKeyId: process.env.MINIO_ACCESS_KEY_ID || "",
+      secretAccessKey: process.env.MINIO_SECRET_ACCESS_KEY || "",
+    },
+    nativeS3Configuration: {
+      endpoint: process.env.MINIO_ENDPOINT ?? "http://localhost:9000",
+      forcePathStyle: true,
+      signatureVersion: "v4",
+      // The `region` is required by the AWS SDK even when using MinIO,
+      // so we just use a dummy value here.
+      region: "eu-west-1",
+    },
+  }),
+});
 
 export const config: VendureConfig = {
   catalogOptions: {
@@ -125,7 +122,7 @@ export const config: VendureConfig = {
   paymentOptions: {
     paymentMethodHandlers: [dummyPaymentHandler],
   },
-
+  logger: new DefaultLogger({ level: LogLevel.Debug }),
   apiOptions: {
     port: 3000,
     adminApiPath: "admin-api",
