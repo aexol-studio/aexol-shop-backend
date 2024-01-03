@@ -11,9 +11,15 @@
     "sourceMap": false,
     "skipLibCheck": true,
     "outDir": "./dist",
+    "resolveJsonModule": true,
     "baseUrl": "./"
   },
-  "exclude": ["node_modules", "migration.ts", "src/plugins/**/ui/*", "admin-ui"],
+  "exclude": [
+    "node_modules",
+    "migration.ts",
+    "src/plugins/**/ui/*",
+    "admin-ui"
+  ],
   "ts-node": {
     "files": true
   }

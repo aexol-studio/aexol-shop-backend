@@ -19,10 +19,11 @@ import {
 } from "@vendure/asset-server-plugin";
 import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
 import { StripePlugin } from "@vendure/payments-plugin/package/stripe";
-import "dotenv/config";
 import path from "path";
+import { Przelewy24Plugin } from "./dist";
 
 const IS_DEV = process.env.APP_ENV === "dev";
+
 export const dummyPaymentHandler = new PaymentMethodHandler({
   code: "dummy-payment-handler",
   description: [
@@ -101,8 +102,8 @@ const AssetsPlugin = AssetServerPlugin.init({
   storageStrategyFactory: configureS3AssetStorage({
     bucket: "vendure-dev",
     credentials: {
-      accessKeyId: process.env.MINIO_ACCESS_KEY_ID || "",
-      secretAccessKey: process.env.MINIO_SECRET_ACCESS_KEY || "",
+      accessKeyId: process.env.MINIO_ACCESS_KEY_ID ?? "",
+      secretAccessKey: process.env.MINIO_SECRET_ACCESS_KEY ?? "",
     },
     nativeS3Configuration: {
       endpoint: process.env.MINIO_ENDPOINT ?? "http://localhost:9000",
@@ -171,6 +172,13 @@ export const config: VendureConfig = {
   // need to be updated. See the "Migrations" section in README.md.
   customFields: {},
   plugins: [
+    // PaymentPrzelewy24Plugin,
+    Przelewy24Plugin.init({
+      envs: {
+        API_URL: process.env.API_URL || "http://localhost:3000",
+        STOREFRONT_URL: process.env.STOREFRONT_URL || "http://localhost:8080",
+      },
+    }),
     AssetsPlugin,
     // StripePlugin.init({
     //   storeCustomersInStripe: true,

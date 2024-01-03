@@ -21,18 +21,16 @@
     "@vendure/admin-ui-plugin": "2.1.4",
     "@vendure/asset-server-plugin": "2.1.4",
     "@vendure/core": "2.1.4",
+    "@vendure/create": "^2.1.5",
     "@vendure/email-plugin": "2.1.4",
     "@vendure/payments-plugin": "^2.1.5",
     "@vendure/ui-devkit": "^2.1.5",
     "dotenv": "16.3.1",
     "pg": "8.11.3",
-    "react-hook-form": "^7.49.2",
     "stripe": "^13.11.0",
-    "typescript": "4.9.5",
-    "vendure-plugin-template": "^0.0.1"
+    "typescript": "4.9.5"
   },
   "devDependencies": {
-    "@flydotio/dockerfile": "^0.5.0",
     "concurrently": "8.2.2",
     "ts-node": "10.9.2"
   }
