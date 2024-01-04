@@ -39,8 +39,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          images: arkadiuszkurylo/aexol-shop-backend
           file: ./Dockerfile
           context: .
           push: true
-          tags: ${{ env.GITHUB_SHA_SHORT }}-${CURRENT_DATE}
+          tags: arkadiuszkurylo/aexol-shop-backend:${{ env.GITHUB_SHA_SHORT }}-${CURRENT_DATE}
