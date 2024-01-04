@@ -12,7 +12,7 @@
     "skipLibCheck": true,
     "outDir": "./dist",
     "resolveJsonModule": true,
-    "baseUrl": "./"
+    "baseUrl": "./node_modules"
   },
   "exclude": [
     "node_modules",
