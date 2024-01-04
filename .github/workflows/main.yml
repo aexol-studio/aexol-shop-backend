@@ -12,10 +12,10 @@ jobs:
     steps:
       - name: setup-node
         uses: actions/setup-node@v1
+        with:
+            node-version: 18.14
       - name: checkout
         uses: actions/checkout@v2
-        with:
-          node-version: 18.14
       - name: preinstall aws
         run: npm install @aws-sdk/client-s3
       - name: install dependencies
