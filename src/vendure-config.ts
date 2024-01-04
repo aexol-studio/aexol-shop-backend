@@ -78,6 +78,7 @@ export const config: VendureConfig = {
     cookieOptions: {
       secret: process.env.COOKIE_SECRET,
       domain: "shop.aexol.com",
+      sameSite: "lax",
     },
   },
   dbConnectionOptions: {
