@@ -20,7 +20,7 @@ import {
 import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
 import { StripePlugin } from "@vendure/payments-plugin/package/stripe";
 import path from "path";
-import { Przelewy24Plugin } from "./dist";
+// import { Przelewy24Plugin } from "./dist";
 
 const IS_DEV = process.env.APP_ENV === "dev";
 
@@ -133,15 +133,15 @@ export const config: VendureConfig = {
     // reasons.
     ...(IS_DEV
       ? {
-          adminApiPlayground: {
-            settings: { "request.credentials": "include" },
-          },
-          adminApiDebug: true,
-          shopApiPlayground: {
-            settings: { "request.credentials": "include" },
-          },
-          shopApiDebug: true,
-        }
+        adminApiPlayground: {
+          settings: { "request.credentials": "include" },
+        },
+        adminApiDebug: true,
+        shopApiPlayground: {
+          settings: { "request.credentials": "include" },
+        },
+        shopApiDebug: true,
+      }
       : {}),
   },
   authOptions: {
@@ -173,12 +173,12 @@ export const config: VendureConfig = {
   customFields: {},
   plugins: [
     // PaymentPrzelewy24Plugin,
-    Przelewy24Plugin.init({
-      envs: {
-        API_URL: process.env.API_URL || "http://localhost:3000",
-        STOREFRONT_URL: process.env.STOREFRONT_URL || "http://localhost:8080",
-      },
-    }),
+    // Przelewy24Plugin.init({
+    //   envs: {
+    //     API_URL: process.env.API_URL || "http://localhost:3000",
+    //     STOREFRONT_URL: process.env.STOREFRONT_URL || "http://localhost:8080",
+    //   },
+    // }),
     AssetsPlugin,
     // StripePlugin.init({
     //   storeCustomersInStripe: true,
