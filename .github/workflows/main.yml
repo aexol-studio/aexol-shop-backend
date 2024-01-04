@@ -36,10 +36,12 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: create tag
         run: echo "CURRENT_DATE=$(date +%s)"
+      - name: Set env
+        run: echo "GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           file: ./Dockerfile
           context: .
           push: true
-          tags: arkadiuszkurylo/aexol-shop-backend:${{ env.GITHUB_SHA_SHORT }}-${CURRENT_DATE}
+          tags: arkadiuszkurylo/aexol-shop-backend:${GITHUB_SHA_SHORT}-${CURRENT_DATE}
