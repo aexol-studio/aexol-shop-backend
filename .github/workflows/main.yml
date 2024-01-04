@@ -16,10 +16,8 @@ jobs:
             node-version: 18.14
       - name: checkout
         uses: actions/checkout@v2
-      - name: preinstall aws
-        run: npm install @aws-sdk/client-s3
       - name: install dependencies
-        run: npm i
+        run: npm ci
       - name: check build errors
         run: npm run build
       - name: check test if exsists
