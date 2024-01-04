@@ -2,13 +2,7 @@ import {
   DefaultJobQueuePlugin,
   DefaultSearchPlugin,
   VendureConfig,
-  EntityHydrator,
-  LanguageCode,
-  PaymentMethodHandler,
   DefaultAssetNamingStrategy,
-  RequestContext,
-  StockDisplayStrategy,
-  ProductVariant,
   DefaultLogger,
   LogLevel,
 } from "@vendure/core";
@@ -18,82 +12,12 @@ import {
   configureS3AssetStorage,
 } from "@vendure/asset-server-plugin";
 import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
-import { StripePlugin } from "@vendure/payments-plugin/package/stripe";
 import path from "path";
-// import { Przelewy24Plugin } from "./dist";
+import { ExactStockDisplayStrategy } from "./utils/stock-display-strategy";
+import { dummyPaymentHandler } from "./utils/dummy-payment";
+import "dotenv/config";
 
 const IS_DEV = process.env.APP_ENV === "dev";
-
-export const dummyPaymentHandler = new PaymentMethodHandler({
-  code: "dummy-payment-handler",
-  description: [
-    /* omitted for brevity */
-  ],
-  args: {
-    automaticSettle: {
-      type: "boolean",
-      label: [
-        {
-          languageCode: LanguageCode.en,
-          value: "Authorize and settle in 1 step",
-        },
-      ],
-      description: [
-        {
-          languageCode: LanguageCode.en,
-          value: 'If enabled, Payments will be created in the "Settled" state.',
-        },
-      ],
-      required: true,
-      defaultValue: false,
-    },
-  },
-  createPayment: async (ctx, order, amount, args, metadata, method) => {
-    console.log("createPayment");
-    const properMetadata = JSON.parse(metadata as unknown as string) as {
-      shouldDecline: boolean;
-      shouldCancel: boolean;
-      shouldError: boolean;
-      shouldErrorOnSettle: boolean;
-    };
-
-    if (properMetadata.shouldDecline) {
-      return {
-        amount,
-        state: "Declined",
-      };
-    }
-
-    if (properMetadata.shouldCancel) {
-      return {
-        amount,
-        state: "Cancelled",
-      };
-    }
-
-    if (properMetadata.shouldError) {
-      throw new Error("Error in payment");
-    }
-
-    return { amount, state: "Authorized" };
-  },
-  settlePayment: async (ctx, order, payment, args, metadata) => {
-    console.dir("settlePayment", metadata);
-    console.dir("payment", payment);
-
-    return { success: true };
-  },
-});
-
-export class ExactStockDisplayStrategy implements StockDisplayStrategy {
-  getStockLevel(
-    ctx: RequestContext,
-    productVariant: ProductVariant,
-    saleableStockLevel: number
-  ): string {
-    return saleableStockLevel.toString();
-  }
-}
 
 const AssetsPlugin = AssetServerPlugin.init({
   route: "assets",
@@ -133,15 +57,15 @@ export const config: VendureConfig = {
     // reasons.
     ...(IS_DEV
       ? {
-        adminApiPlayground: {
-          settings: { "request.credentials": "include" },
-        },
-        adminApiDebug: true,
-        shopApiPlayground: {
-          settings: { "request.credentials": "include" },
-        },
-        shopApiDebug: true,
-      }
+          adminApiPlayground: {
+            settings: { "request.credentials": "include" },
+          },
+          adminApiDebug: true,
+          shopApiPlayground: {
+            settings: { "request.credentials": "include" },
+          },
+          shopApiDebug: true,
+        }
       : {}),
   },
   authOptions: {
@@ -172,13 +96,6 @@ export const config: VendureConfig = {
   // need to be updated. See the "Migrations" section in README.md.
   customFields: {},
   plugins: [
-    // PaymentPrzelewy24Plugin,
-    // Przelewy24Plugin.init({
-    //   envs: {
-    //     API_URL: process.env.API_URL || "http://localhost:3000",
-    //     STOREFRONT_URL: process.env.STOREFRONT_URL || "http://localhost:8080",
-    //   },
-    // }),
     AssetsPlugin,
     // StripePlugin.init({
     //   storeCustomersInStripe: true,
@@ -226,11 +143,17 @@ export const config: VendureConfig = {
     DefaultJobQueuePlugin.init({ useDatabaseForBuffer: true }),
     DefaultSearchPlugin.init({ bufferUpdates: false, indexStockStatus: true }),
     EmailPlugin.init({
-      devMode: true,
-      outputPath: path.join(__dirname, "../static/email/test-emails"),
-      route: "mailbox",
       handlers: defaultEmailHandlers,
       templatePath: path.join(__dirname, "../static/email/templates"),
+      transport: {
+        type: "smtp",
+        host: process.env.SMTP_HOST,
+        port: +process.env.SMTP_PORT!,
+        auth: {
+          user: process.env.SMTP_USERNAME,
+          pass: process.env.SMTP_PASSWORD,
+        },
+      },
       globalTemplateVars: {
         // The following variables will change depending on your storefront implementation.
         // Here we are assuming a storefront running at http://localhost:8080.
