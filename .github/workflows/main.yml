@@ -44,4 +44,4 @@ jobs:
           file: ./Dockerfile
           context: .
           push: true
-          tags: arkadiuszkurylo/aexol-shop-backend:${GITHUB_SHA_SHORT}-${CURRENT_DATE}
+          tags: arkadiuszkurylo/aexol-shop-backend:${{ env.GITHUB_SHA_SHORT }}-${CURRENT_DATE}
