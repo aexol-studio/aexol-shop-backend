@@ -16,7 +16,7 @@ import path from "path";
 import { ExactStockDisplayStrategy } from "./utils/stock-display-strategy";
 import { dummyPaymentHandler } from "./utils/dummy-payment";
 import "dotenv/config";
-import { Przelewy24Plugin } from "./dist";
+// import { Przelewy24Plugin } from "./dist";
 
 const IS_DEV = process.env.APP_ENV === "dev";
 
@@ -98,7 +98,7 @@ export const config: VendureConfig = {
   // need to be updated. See the "Migrations" section in README.md.
   customFields: {},
   plugins: [
-    Przelewy24Plugin.init({}),
+    // Przelewy24Plugin.init({}),
     AssetsPlugin,
     // StripePlugin.init({
     //   storeCustomersInStripe: true,
