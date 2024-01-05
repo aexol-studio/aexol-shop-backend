@@ -3,14 +3,14 @@ import {
   defaultEmailHandlers,
 } from "@vendure/email-plugin";
 import path from "path";
-import { getEnvs } from "../../../getEnvs";
+import { getEnvs } from "../../getEnvs";
 
 const { SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, STOREFRONT_URL } =
   getEnvs();
 console.log(__dirname);
 export const EmailPlugin = Base.init({
   handlers: defaultEmailHandlers,
-  templatePath: path.join(__dirname, "templates"),
+  templatePath: path.join(__dirname, "../../../static/email/templates"),
   transport: {
     type: "smtp",
     host: SMTP_HOST,
