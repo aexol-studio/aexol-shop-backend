@@ -2,6 +2,7 @@ import {
   StockDisplayStrategy,
   RequestContext,
   ProductVariant,
+  VendureConfig,
 } from "@vendure/core";
 
 export class ExactStockDisplayStrategy implements StockDisplayStrategy {
@@ -13,3 +14,7 @@ export class ExactStockDisplayStrategy implements StockDisplayStrategy {
     return saleableStockLevel.toString();
   }
 }
+
+export const catalogOptions: VendureConfig["catalogOptions"] = {
+  stockDisplayStrategy: new ExactStockDisplayStrategy(),
+};
