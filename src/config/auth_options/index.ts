@@ -1,8 +1,7 @@
 import { VendureConfig } from "@vendure/core";
 import { getEnvs } from "../../getEnvs";
 
-const { SUPERADMIN_PASSWORD, SUPERADMIN_USERNAME, COOKIE_SECRET, APP_ENV } =
-  getEnvs();
+const { SUPERADMIN_PASSWORD, SUPERADMIN_USERNAME, COOKIE_SECRET } = getEnvs();
 
 export const authOptions: VendureConfig["authOptions"] = {
   tokenMethod: ["bearer", "cookie"],
@@ -12,6 +11,8 @@ export const authOptions: VendureConfig["authOptions"] = {
   },
   cookieOptions: {
     secret: COOKIE_SECRET,
-    ...(APP_ENV === "dev" ? {} : { domain: ".aexol.com", sameSite: "lax" }),
+    ...(process.env.APP_ENV === "dev"
+      ? {}
+      : { domain: ".aexol.com", sameSite: "lax" }),
   },
 };
