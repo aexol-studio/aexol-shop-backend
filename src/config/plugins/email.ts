@@ -7,7 +7,7 @@ import { getEnvs } from "../../getEnvs";
 
 const { SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, STOREFRONT_URL } =
   getEnvs();
-console.log(__dirname);
+
 export const EmailPlugin = Base.init({
   handlers: defaultEmailHandlers,
   templatePath: path.join(__dirname, "../../../static/email/templates"),
@@ -16,6 +16,8 @@ export const EmailPlugin = Base.init({
     host: SMTP_HOST,
     port: Number(SMTP_PORT),
     auth: { user: SMTP_USERNAME, pass: SMTP_PASSWORD },
+    logging: true,
+    debug: true,
   },
   globalTemplateVars: {
     fromAddress: `"Aexol Demo Vendure Store" <${SMTP_USERNAME}>`,
