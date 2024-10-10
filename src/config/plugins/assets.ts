@@ -5,7 +5,7 @@ import {
 import { DefaultAssetNamingStrategy } from "@vendure/core";
 import path from "path";
 import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
-import { getEnvs } from "src/getEnvs";
+import { getEnvs } from "../../getEnvs";
 
 const region = process.env.AWS_REGION || "eu-central-1";
 const credentials = fromNodeProviderChain({
