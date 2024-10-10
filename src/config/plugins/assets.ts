@@ -6,8 +6,10 @@ import { DefaultAssetNamingStrategy } from "@vendure/core";
 import path from "path";
 import { getEnvs } from "../../getEnvs";
 
-const { MINIO_ACCESS_KEY_ID, MINIO_ENDPOINT, MINIO_SECRET_ACCESS_KEY } =
+const { S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY } =
   getEnvs();
+
+const { S3_ENDPOINT, S3_FORCE_PATH_STYLE } = process.env;
 
 export const AssetsPlugin = AssetServerPlugin.init({
   route: "assets",
@@ -16,12 +18,12 @@ export const AssetsPlugin = AssetServerPlugin.init({
   storageStrategyFactory: configureS3AssetStorage({
     bucket: "vendure-dev",
     credentials: {
-      accessKeyId: MINIO_ACCESS_KEY_ID,
-      secretAccessKey: MINIO_SECRET_ACCESS_KEY,
+      accessKeyId: S3_ACCESS_KEY_ID,
+      secretAccessKey: S3_SECRET_ACCESS_KEY,
     },
     nativeS3Configuration: {
-      endpoint: MINIO_ENDPOINT,
-      forcePathStyle: true,
+      ...(S3_ENDPOINT && { endpoint: S3_ENDPOINT }),
+      ...(S3_FORCE_PATH_STYLE === "1" && { forcePathStyle: true }),
       signatureVersion: "v4",
       // The `region` is required by the AWS SDK even when using MinIO,
       // so we just use a dummy value here.
