@@ -10,7 +10,7 @@ export const dbConnectionOptions: VendureConfig["dbConnectionOptions"] = {
   // See the README.md "Migrations" section for an explanation of
   // the `synchronize` and `migrations` options.
   synchronize: false,
-  migrations: [path.join(__dirname, "./migrations/*.+(js|ts)")],
+  migrations: [path.join(__dirname, "../../migrations/*.+(js|ts)")],
   logging: false,
   database: DB_NAME,
   schema: DB_SCHEMA,
